@@ -47,6 +47,22 @@ def estimate_tonality(sentences: list, model: AutoModelForSequenceClassification
     return sentiment_out
 
 
+def ensamble_filter(sentiments: list, n_filters=100, polyorder=0, **savgol_args) -> list:
+    filt = 0
+
+    length = len(sentiments)
+    start = length // 10
+    stop = length // 4
+    step = (stop - start) // n_filters
+    
+    if step == 0:
+        step = 1
+    
+    for window_size in range(start, stop, step):
+        res = savgol_filter(sentiments, window_length=window_size, polyorder=polyorder, **savgol_args)
+        filt += res
+    
+    return filt / n_filters
 # if __name__ == '__main__':
 
 # Preparing text for analisys 
@@ -65,8 +81,8 @@ if torch.cuda.is_available():
 # Getting sentiment for every sentence in text 
 sentiments = estimate_tonality(sentences, model)
 
-# Filter noise from sentiments
-filtered_sentiments = savgol_filter(sentiments, window_length=len(sentiments) // 15, polyorder=0) 
+# Default savgol filter
+# filtered_sentiments = savgol_filter(sentiments, window_length=len(sentiments) // 15, polyorder=0) 
 
-# for i in range(10):
-#     print(f'{sentences[i]} TONALITY: {sentiments[i]}')
+# Ensamble filter
+filtered_sentiments = ensamble_filter(sentiments)

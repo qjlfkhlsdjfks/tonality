@@ -13,9 +13,6 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 # To process results 
 from scipy.signal import savgol_filter
 
-# To create tone curve plots
-import matplotlib.pyplot as plt
-
 
 def get_text_from_file(filename: str) -> str:
     with open(filename, 'r') as file:
@@ -50,22 +47,26 @@ def estimate_tonality(sentences: list, model: AutoModelForSequenceClassification
     return sentiment_out
 
 
-if __name__ == '__main__':
-    # Preparing text for analisys 
-    text = get_text_from_file('text.txt')
-    cleaned_text = clean_text(text)
-    sentences = split_text_by_sentences(cleaned_text)
+# if __name__ == '__main__':
 
-    # Getting model
-    model_checkpoint = 'cointegrated/rubert-tiny-sentiment-balanced'
-    tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
-    model = AutoModelForSequenceClassification.from_pretrained(model_checkpoint)
+# Preparing text for analisys 
+text = get_text_from_file('text.txt')
+cleaned_text = clean_text(text)
+sentences = split_text_by_sentences(cleaned_text)
 
-    if torch.cuda.is_available():
-        model.cuda()
+# Getting model
+model_checkpoint = 'cointegrated/rubert-tiny-sentiment-balanced'
+tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
+model = AutoModelForSequenceClassification.from_pretrained(model_checkpoint)
 
-    # Getting sentiment for every sentence in text 
-    sentiments = estimate_tonality(sentences, model)
-    
-    # for i in range(10):
-    #     print(f'{sentences[i]} TONALITY: {sentiments[i]}')
+if torch.cuda.is_available():
+    model.cuda()
+
+# Getting sentiment for every sentence in text 
+sentiments = estimate_tonality(sentences, model)
+
+# Filter noise from sentiments
+filtered_sentiments = savgol_filter(sentiments, window_length=len(sentiments) // 15, polyorder=0) 
+
+# for i in range(10):
+#     print(f'{sentences[i]} TONALITY: {sentiments[i]}')
